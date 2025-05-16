@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://backend:5000
+      - REACT_APP_WS_URL=ws://backend:5000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - polychat-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/polychat
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - TRANSLATION_API_KEY=${TRANSLATION_API_KEY}
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend:/app
+    networks:
+      - polychat-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - polychat-network
+
+networks:
+  polychat-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
